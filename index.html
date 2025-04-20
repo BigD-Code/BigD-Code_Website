@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>BigD-Code Terminal</title>
+    <style>
+        /* VARIABILI DI STILE - COLORI PRINCIPALI */
+        :root {
+            --neon-green: #0f0;
+            --bright-green: #00ff00;
+            --matrix-green: #03ff03;
+            --dim-green: #00aa00;
+            --cyber-dark: #001100;
+            --terminal-bg: rgba(0, 12, 2, 0.92);
+            --glitch-blue: rgba(33, 150, 243, 0.3);
+            --glitch-red: rgba(255, 0, 0, 0.3);
+            --fsociety-red: #ff0000;
+            --fsociety-dark: #1a1a1a;
+            --elliot-gray: #a0a0a0;
+        }
+
+        /* FONT CYBERPUNK PERSONALIZZATO */
+        @font-face {
+            font-family: 'CyberFont';
+            src: url('https://fonts.gstatic.com/s/share/v14/i7dJIFliZjKNF63xM56-WkJUQUq7.woff2') format('woff2');
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+
+        /* RESET CSS BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* STILE GENERALE DELLA PAGINA */
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Consolas', monospace;
+            color: var(--neon-green);
+        }
+
+        /* SEZIONE TERMINALE - INIZIO */
+        .terminal-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 800px;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .terminal-container {
+            flex: 1;
+            position: relative;
+            background: var(--terminal-bg);
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 20, 0, 0.5);
+            border-radius: 6px;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            animation: bootup 1.5s ease-out;
+        }
+
+        /* ANIMAZIONE DI AVVIO DEL TERMINALE */
+        @keyframes bootup {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            30% {
+                opacity: 0.3;
+                transform: scale(0.95);
+            }
+
+            40% {
+                opacity: 0.5;
+                transform: scale(1);
+                filter: brightness(2) blur(2px);
+            }
+
+            42% {
+                opacity: 0.1;
+                filter: brightness(0.5) blur(1px);
+            }
+
+            50% {
+                opacity: 0.7;
+                filter: brightness(1) blur(0);
+            }
+
+            60% {
+                opacity: 0.5;
+                filter: brightness(1.2) blur(1px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: brightness(1) blur(0);
+            }
+        }
+
+        /* STILE DELL'HEADER DEL TERMINALE */
+        .terminal-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--dim-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, rgba(0, 40, 0, 0.8), rgba(0, 20, 0, 0.4));
+            height: 40px;
+            position: relative;
+            overflow: hidden;
+            cursor: move;
+        }
+
+        /* CONTROLLI DEL TERMINALE (BOTTONI) */
+        .terminal-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .close {
+            background: #ff5f56;
+        }
+
+        .minimize {
+            background: #ffbd2e;
+        }
+
+        .maximize {
+            background: #27c93f;
+        }
+
+        .terminal-title {
+            font-family: 'CyberFont', monospace;
+            color: var(--neon-green);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .terminal-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .secure {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        /* SCANLINES EFFECT */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.03) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+            background-size: 100% 8px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        /* SEZIONE CONTENUTO DEL TERMINALE */
+        .terminal-content {
+            padding: 20px;
+            color: var(--matrix-green);
+            height: calc(100% - 100px);
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dim-green) var(--cyber-dark);
+            position: relative;
+            font-family: 'Consolas', monospace;
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: var(--cyber-dark);
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: var(--dim-green);
+        }
+
+        /* INPUT CONTAINER TERMINALE */
+        .terminal-input-container {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 40px;
+            border-top: 1px solid var(--dim-green);
+            background: rgba(0, 15, 0, 0.6);
+        }
+
+        .prompt {
+            color: var(--bright-green);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: var(--neon-green);
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            outline: none;
+            flex: 1;
+            caret-color: var(--neon-green);
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            height: 20px;
+            padding: 0 15px;
+            background: var(--cyber-dark);
+            border-top: 1px solid var(--dim-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--dim-green);
+        }
+
+        .status-left,
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .data-transfer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .progress-bar {
+            width: 60px;
+            height: 5px;
+            background: rgba(0, 100, 0, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            width: 30%;
+            background: var(--neon-green);
+            animation: progress 2s infinite;
+        }
+
+        @keyframes progress {
+            0% {
+                width: 0%;
+            }
+
+            50% {
+                width: 70%;
+            }
+
+            100% {
+                width: 0%;
+            }
+        }
+
+        /* SFONDO MATRIX */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.7;
+        }
+
+        .particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* MODALE EFFETTO HACKING */
+        .hack-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .hack-effect.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .glow-text {
+            color: var(--neon-green);
+            font-family: 'CyberFont', monospace;
+            text-shadow: 0 0 10px var(--neon-green);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .hack-progress {
+            width: 80%;
+            max-width: 500px;
+            height: 10px;
+            background: var(--cyber-dark);
+            border: 1px solid var(--dim-green);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .hack-bar {
+            height: 100%;
+            width: 0;
+            background: var(--neon-green);
+            transition: width 0.2s linear;
+        }
+
+        .hack-text {
+            color: var(--neon-green);
+            font-family: 'Consolas', monospace;
+            margin-top: 15px;
+        }
+
+        /* LOADING DOTS ANIMATION */
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+
+        /* STILE MR ROBOT  */
+        .fsociety-logo {
+            margin: 20px auto;
+            text-align: center;
+            font-family: monospace;
+            white-space: pre;
+            color: var(--fsociety-red);
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+            font-weight: bold;
+            line-height: 1.2;
+            align-items: center;
+        }
+
+        .mr-robot-profile {
+            background: rgba(10, 10, 10, 0.7);
+            border: 1px solid var(--dim-green);
+            border-radius: 5px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mr-robot-profile::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg,
+                    var(--fsociety-red) 0%,
+                    var(--fsociety-red) 33%,
+                    transparent 33%,
+                    transparent 66%,
+                    var(--fsociety-red) 66%,
+                    var(--fsociety-red) 100%);
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 0, 0, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .glitch-text {
+            color: var(--neon-green);
+            position: relative;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: glitch 3s infinite;
+        }
+
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .glitch-text::before {
+            color: var(--glitch-blue);
+            z-index: -1;
+            animation: glitch-offset 3s infinite;
+        }
+
+        .glitch-text::after {
+            color: var(--glitch-red);
+            z-index: -2;
+            animation: glitch-offset 3s reverse infinite;
+        }
+
+        @keyframes glitch {
+
+            0%,
+            100% {
+                transform: none;
+                opacity: 1;
+            }
+
+            7% {
+                transform: skew(-0.5deg, -0.9deg);
+                opacity: 0.75;
+            }
+
+            10% {
+                transform: none;
+                opacity: 1;
+            }
+
+            27% {
+                transform: none;
+                opacity: 1;
+            }
+
+            30% {
+                transform: skew(0.8deg, -0.1deg);
+                opacity: 0.75;
+            }
+
+            35% {
+                transform: none;
+                opacity: 1;
+            }
+
+            52% {
+                transform: none;
+                opacity: 1;
+            }
+
+            55% {
+                transform: skew(-1deg, 0.2deg);
+                opacity: 0.75;
+            }
+
+            50% {
+                transform: none;
+                opacity: 1;
+            }
+
+            72% {
+                transform: none;
+                opacity: 1;
+            }
+
+            75% {
+                transform: skew(0.4deg, 1deg);
+                opacity: 0.75;
+            }
+
+            80% {
+                transform: none;
+                opacity: 1;
+            }
+
+            100% {
+                transform: none;
+                opacity: 1;
+            }
+        }
+
+        @keyframes glitch-offset {
+
+            0%,
+            100% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+                transform: translate(0);
+            }
+
+            20% {
+                clip-path: polygon(0 15%, 100% 15%, 100% 15%, 0% 15%);
+                transform: translate(-5px, 10px);
+            }
+
+            40% {
+                clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0% 50%);
+                transform: translate(5px, 0);
+            }
+
+            60% {
+                clip-path: polygon(0 70%, 100% 70%, 100% 70%, 0% 70%);
+                transform: translate(0, 10px);
+            }
+
+            80% {
+                clip-path: polygon(0 80%, 100% 80%, 100% 80%, 0% 80%);
+                transform: translate(-5px, 0);
+            }
+        }
+
+        .status-badge {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--fsociety-red);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid var(--fsociety-red);
+        }
+
+        .skills-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .skill-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skill-name {
+            color: var(--elliot-gray);
+            margin-bottom: 5px;
+        }
+
+        .skill-bar {
+            height: 8px;
+            background: rgba(20, 20, 20, 0.8);
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .skill-level {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, var(--fsociety-red), var(--neon-green));
+        }
+
+        .quotes-section {
+            margin-top: 25px;
+            border-top: 1px dashed rgba(255, 0, 0, 0.3);
+            padding-top: 15px;
+        }
+
+        .quote {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 3px solid var(--fsociety-red);
+            font-style: italic;
+            color: var(--elliot-gray);
+        }
+
+        .quote-author {
+            display: block;
+            text-align: right;
+            margin-top: 8px;
+            color: var(--neon-green);
+            font-style: normal;
+            font-size: 12px;
+        }
+
+        .social-graph {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 10, 0, 0.4);
+            border-radius: 4px;
+        }
+
+        .connections {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .connection {
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .connection-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--dim-green);
+            border-radius: 50%;
+            margin: 0 auto 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .info-rows {
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: flex;
+            margin: 10px 0;
+            border-bottom: 1px dotted rgba(0, 255, 0, 0.2);
+            padding-bottom: 8px;
+        }
+
+        .info-label {
+            width: 120px;
+            color: var(--elliot-gray);
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--neon-green);
+        }
+
+        /* STILI AGGIUNTIVI PER OUTPUT DEL TERMINALE */
+        .error {
+            color: #ff3333;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+        }
+
+        .success {
+            color: var(--bright-green);
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .highlight {
+            color: #00ccff;
+            text-shadow: 0 0 5px rgba(0, 204, 255, 0.5);
+        }
+
+        .ascii-art {
+            color: var(--bright-green);
+            font-family: monospace;
+            white-space: pre;
+            margin: 15px 0;
+            line-height: 1.2;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .command-output {
+            margin: 5px 0;
+        }
+
+        .user-input {
+            color: #bbb;
+        }
+
+        /* WINDOW STATE CLASSE */
+        .terminal-container.minimized {
+            height: 40px;
+            overflow: hidden;
+        }
+
+        .terminal-container.maximized {
+            width: 95vw;
+            height: 90vh;
+            top: 5vh;
+            left: 2.5vw;
+        }
+
+        /* EFFETTO CRT  */
+        .crt::before {
+            content: " ";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+
+        .contact-section {
+            border: 1px solid var(--dim-green);
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(0, 20, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(0, 255, 0, 0.1),
+                    transparent);
+            animation: contact-scan 3s infinite;
+        }
+
+        @keyframes contact-scan {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .contact-item {
+            padding: 10px;
+            border-left: 2px solid var(--dim-green);
+            position: relative;
+        }
+
+        .contact-label {
+            display: block;
+            font-family: 'CyberFont', monospace;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        .contact-value {
+            color: var(--bright-green);
+            display: block;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .contact-note {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .hacked-link {
+            color: var(--bright-green);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .hacked-link:hover {
+            text-decoration: underline;
+            animation: link-glitch 0.5s infinite;
+        }
+
+        @keyframes link-glitch {
+            0% {
+                text-shadow: 0 0 5px var(--bright-green);
+            }
+
+            50% {
+                text-shadow: 2px 0 2px var(--glitch-blue),
+                    -2px 0 2px var(--glitch-red);
+                transform: translateX(2px);
+            }
+
+            100% {
+                text-shadow: 0 0 5px var(--bright-green);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SEZIONE MATRIX BACKGROUND -->
+    <canvas id="matrix-canvas"></canvas>
+    <div id="particles-js" class="particles-js"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- TERMINALE PRINCIPALE -->
+    <div class="terminal-window" id="terminal-window">
+        <div class="terminal-container crt" id="terminal-container">
+            <div class="terminal-header draggable" id="terminal-header">
+                <div class="terminal-controls">
+                    <span class="control close" id="close-btn"></span>
+                    <span class="control minimize" id="minimize-btn"></span>
+                    <span class="control maximize" id="maximize-btn"></span>
+                </div>
+                <span class="terminal-title">BIGD-CODΞ v3.141 // FSOCIETY TERMINAL</span>
+                <div class="terminal-status">
+                    <span class="status-indicator"></span>
+                    CONNECTION: <span class="secure">ENCRYPTED</span>
+                </div>
+            </div>
+            <div class="scanlines"></div>
+            <div class="terminal-content" id="terminal-content">
+                <!-- Contenuto iniziale -->
+                <pre class="fsociety-logo">
+     ░░░░░░░░░░░░░░░░░░░▒▓███████████████▓▒░░░░░░░░░░░░░░░░░░░
+     ░░░░░░░░░░░░▒▓███▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓███▓▒░░░░░░░░░░░░
+     ░░░░░░░░░▒██▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓██▒░░░░░░░░░
+     ░░░░░░░▓██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▓░░░░░░░
+     ░░░░░░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░░░░░
+     ░░░░░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░░░░
+     ░░░░██▒▒▒▒▒▒▒▒▒▒▒▒/\/\/\▒▒▒▒▒▒▒▒▒/\/\/\▒▒▒▒▒▒▒▒▒▒██░░░░
+     ░░░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░░
+     ░░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░░
+     ░██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒█▓▒▒▒▒▒▒▓█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██░
+     ██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▓▒▒▒▒▒▒▒▒▓██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██
+     ██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓█▒▒▒▒▒▒▒▒▒▒▒▒█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██
+     ██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██
+     ██▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒██
+     ▓█▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒▒▒▒▒█▓
+     ▓█▒▒▒▒▒▒▒▒▒▒▓█▓█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒█▓█▓▒▒▒▒▒▒▒▒█▓
+     ▓█▒▒▒▒▒▒▒▒▒▒██▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒██▒▒▒▒▒▒▒▒█▓
+     ▓█▒▒▒▒▒▒▒▒▒▓█▒▒▒█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓█▒▒▒█▓▒▒▒▒▒▒▒█▓
+     ▒█▒▒▒▒▒▒▒▒▒██▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒██▒▒▒▒▒▒▒█▒
+     ░██▒▒▒▒▒▒▒▓█▒▒▒▒▒█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓█▒▒▒▒▒█▓▒▒▒▒▒██░
+     ░▓█▒▒▒▒▒▒▒██▒▒▒▒▒██▒▒▒▒▒<span class="pulse">F S O C I E T Y</span>▒▒▒▒▒██▒▒▒▒▒██▒▒▒▒▒▒█▓░
+     ░▒█▒▒▒▒▒▒▓█▓▒▒▒▒▒▓█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓█▓▒▒▒▒▒▓█▓▒▒▒▒█▒░
+     ░░█▓▒▒▒▒▒██▒▒▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒▒██▒▒▒▒▓█░░
+     ░░██▒▒▒▒▓█▒▒▒▒▒▒▒▒█▓▒▒▒▒▒☠ ☢ ☣ ☠▒▒▒▒▒█▓▒▒▒▒▒▒▒█▓▒▒▒██░░
+     ░░▒█▓▒▒▒██▒▒▒▒▒▒▒▒██▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▒▒▒▒▒▒▒▒██▒▒▓█▒░░
+     ░░░██▒▒▓█▓▒▒▒▒▒▒▒▒▓█▓▒▒C O N T R O L▒▓█▓▒▒▒▒▒▒▒▒▓█▓▒██░░░
+     ░░░▒█▓▒██▒▒▒▒▒▒▒▒▒▒██i s  a n  i l l u s i o n██▒▒██▓█▒░░░
+     ░░░░██▓█▓▒▒▒▒▒▒▒▒▒▒▓█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓█▓▒▒▒▒▒▒▒▓█▓██░░░░
+     ░░░░░███▒▒▒▒▒▒▒▒▒▒▒▒█████████████████▒▒▒▒▒▒▒▒▒▒▒███░░░░░
+     ░░░░░░██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██░░░░░░
+     ░░░░░░░▓███████████████████████████████████████▓░░░░░░░
+     ░░░░░░░░░▒▓████████████████████████████████▓▒░░░░░░░░░░
+  </pre>
+            </div>
+            <div class="command-output">Initializing secure connection... Done.</div>
+            <div class="command-output success">Welcome to fsociety terminal. Type 'help' for available commands.</div>
+        </div>
+        <!-- Input -->
+        <div class="terminal-input-container">
+            <span class="prompt">fsociety@bigd-code:~$</span>
+            <input id="terminal-input" class="terminal-input" type="text" placeholder="" autofocus />
+        </div>
+        <!-- Status bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span><span class="status-indicator"></span>FSOCIETY ACTIVE</span>
+                <span class="data-transfer">
+                    DATA TRANSFER: <div class="progress-bar">
+                        <div class="progress"></div>
+                    </div>
+                </span>
+            </div>
+            <div class="status-right">
+                <span id="current-time">00:00:00</span>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- EFFETTO HACK MODALE -->
+    <div id="hack-effect" class="hack-effect">
+        <h2 class="glow-text">INITIATING HACK SEQUENCE</h2>
+        <div class="hack-progress">
+            <div id="hack-bar" class="hack-bar"></div>
+        </div>
+        <div id="hack-text" class="hack-text loading-dots">Bypassing security protocols</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Elementi
+        const terminalInput = document.getElementById('terminal-input');
+        const terminalContent = document.getElementById('terminal-content');
+        const currentTime = document.getElementById('current-time');
+        const hackEffect = document.getElementById('hack-effect');
+        const hackBar = document.getElementById('hack-bar');
+        const hackText = document.getElementById('hack-text');
+        const terminalWindow = document.getElementById('terminal-window');
+        const terminalContainer = document.getElementById('terminal-container');
+        const terminalHeader = document.getElementById('terminal-header');
+
+        // Svariabili di stato
+        let commandHistory = [];
+        let historyIndex = -1;
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+
+        const mrRobotQuotes = [
+            {
+                text: "Hello, friend. Hello, friend? That's lame. Maybe I should give you a name. But that's a slippery slope, you're only in my head, we have to remember that.",
+                author: "Elliot Alderson"
+            },
+            {
+                text: "A bug is never just a mistake. It represents something bigger. An error of thinking. That makes you who you are.",
+                author: "Elliot Alderson"
+            },
+            {
+                text: "People always make the best exploits. I've never found it hard to hack most people. If you listen to them, watch them, their vulnerabilities are like a neon sign.",
+                author: "Elliot Alderson"
+            },
+            {
+                text: "The world itself's just one big hoax. Spamming each other with our running commentary of bullshit masquerading as insight.",
+                author: "Elliot Alderson"
+            },
+            {
+                text: "Control is an illusion.",
+                author: "Mr. Robot"
+            }
+        ];
+
+        // Comandi disponibili
+        const commands = {
+            help: () => `
+<span class="success">Available commands:</span>
+- <span style="color:#00ff00">help</span>: Show this help
+- <span style="color:#00ff00">profile</span>: Show hacker profile
+- <span style="color:#00ff00">skills</span>: Show technical skills
+- <span style="color:#00ff00">projects</span>: Show recent projects
+- <span style="color:#00ff00">hack</span>: Initiate hack sequence
+- <span style="color:#00ff00">quotes</span>: Show Mr. Robot quotes
+- <span style="color:#00ff00">clear</span>: Clear terminal
+- <span style="color:#00ff00">matrix</span>: Toggle matrix effect
+- <span style="color:#00ff00">date</span>: Show current date/time
+- <span style="color:#00ff00">echo [text]</span>: Echo text
+- <span style="color:#00ff00">contacts</span>: Contacts Section
+`,
+
+            profile: () => {
+                return `
+<div class="mr-robot-profile">
+    <div class="profile-header">
+        <h2 class="glitch-text" data-text="BIGD-CODE">BIGD-CODE</h2>
+        <span class="status-badge">FSOCIETY MEMBER</span>
+    </div>
+    
+    <div class="info-rows">
+        <div class="info-row">
+            <div class="info-label">Codename:</div>
+            <div class="info-value">_B1gD_</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Expertise:</div>
+            <div class="info-value">Full Stack Developer & Ethical Hacker</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Experience:</div>
+            <div class="info-value">3+ years development | 5+ years security research</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Certifications:</div>
+            <div class="info-value">OSCP, CEH, Hardware Specialist</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Status:</div>
+            <div class="info-value">Active | Last seen: ${new Date().toLocaleString()}</div>
+        </div>
+    </div>
+
+    <div class="quotes-section">
+        <div class="quote">
+            ${mrRobotQuotes[0].text}
+            <span class="quote-author">— ${mrRobotQuotes[0].author}</span>
+        </div>
+    </div>
+
+    <div class="social-graph">
+        <div class="success">Known Connections:</div>
+        <div class="connections">
+            <div class="connection">
+                <div class="connection-icon">S</div>
+                <div>Security</div>
+            </div>
+            <div class="connection">
+                <div class="connection-icon">D</div>
+                <div>Dev</div>
+            </div>
+            <div class="connection">
+                <div class="connection-icon">N</div>
+                <div>Network</div>
+            </div>
+            <div class="connection">
+                <div class="connection-icon">H</div>
+                <div>Hardware</div>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+            },
+
+            skills: () => {
+                return `
+<div class="mr-robot-profile">
+    <div class="profile-header">
+        <h2 class="glitch-text" data-text="TECHNICAL SKILLS">TECHNICAL SKILLS</h2>
+        <span class="status-badge">ELITE LEVEL</span>
+    </div>
+    
+    <div class="skills-container">
+        <div class="skill-item">
+            <div class="skill-name">Network Penetration</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 95%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Advanced Cryptography</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 88%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Social Engineering</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 92%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Hardware Hacking</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 85%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Wireless Exploitation</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 90%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Binary Analysis</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 83%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Reverse Engineering</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 87%;"></div>
+            </div>
+        </div>
+        <div class="skill-item">
+            <div class="skill-name">Web Application Security</div>
+            <div class="skill-bar">
+                <div class="skill-level" style="width: 96%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="quotes-section">
+        <div class="quote">
+            ${mrRobotQuotes[1].text}
+            <span class="quote-author">— ${mrRobotQuotes[1].author}</span>
+        </div>
+    </div>
+</div>
+`;
+            },
+
+            projects: () => {
+                return `
+<div class="mr-robot-profile">
+    <div class="profile-header">
+        <h2 class="glitch-text" data-text="SECRET PROJECTS">SECRET PROJECTS</h2>
+        <span class="status-badge">CLASSIFIED</span>
+    </div>
+    
+    <div class="info-rows">
+        <div class="info-row">
+            <div class="info-label">Project Name:</div>
+            <div class="info-value">GHOST PROTOCOL</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Status:</div>
+            <div class="info-value">ACTIVE</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Objective:</div>
+            <div class="info-value">Exposing corporate manipulation of global financial markets</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Progress:</div>
+            <div class="info-value">73% complete</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Risk Level:</div>
+            <div class="info-value">HIGH</div>
+        </div>
+    </div>
+    
+    <div class="info-rows">
+        <div class="info-row">
+            <div class="info-label">Project Name:</div>
+            <div class="info-value">DARKNET REVOLUTION</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Status:</div>
+            <div class="info-value">PLANNING PHASE</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Objective:</div>
+            <div class="info-value">Building secure communication channels for whistleblowers</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Progress:</div>
+            <div class="info-value">42% complete</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Risk Level:</div>
+            <div class="info-value">MEDIUM</div>
+        </div>
+    </div>
+    
+    <div class="quotes-section">
+        <div class="quote">
+            ${mrRobotQuotes[2].text}
+            <span class="quote-author">— ${mrRobotQuotes[2].author}</span>
+        </div>
+    </div>
+</div>
+`;
+            },
+            contacts: () => {
+    return `
+<div class="mr-robot-contact">
+    <div class="contact-header">
+        <h2 class="glitch-text" data-text="CONTACT US">CONTACT US</h2>
+        <span class="status-badge">CONFIDENTIAL</span>
+    </div>
+    
+    <div class="info-rows">
+        <div class="info-row">
+            <div class="info-label">Email:</div>
+            <div class="info-value">BigD-Code@proton.me</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Phone:</div>
+            <div class="info-value">+39 3476203625</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Address:</div>
+            <div class="info-value">123 Hacker Lane, New York, NY 10001 [fake]</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Social Media:</div>
+            <div class="info-value">
+                <a href="https://x.com/Bigd_Code?t=UBUOuPUWsCZVgT555Q7TQA&s=03" target="_blank" aria-label="Twitter">
+                    <i class="fab fa-twitter social-icon"></i>
+                </a>
+                <a href="https://www.linkedin.com/public-profile/settings" target="_blank" aria-label="LinkedIn">
+                    <i class="fab fa-linkedin-in social-icon"></i>
+                </a>
+                <a href="https://www.instagram.com/its_thebig_motherfuckin_d" target="_blank" aria-label="Instagram">
+                    <i class="fab fa-instagram social-icon"></i>
+                </a>
+                <a href="https://github.com/BigD-Code" target="_blank" aria-label="GitHub">
+                    <i class="fab fa-github social-icon"></i>
+                </a>
+                <a href="https://api.whatsapp.com/send?text=Hello" target="+39 3476203625" aria-label="WhatsApp">
+                    <i class="fab fa-whatsapp social-icon"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="quotes-section">
+        <div class="quote">
+            "The best way to predict the future is to invent it."
+            <span class="quote-author">— Alan Kay</span>
+        </div>
+    </div>
+</div>
+`;
+},
+
+
+            hack: () => {
+                startHack();
+                return '<span class="success">Initializing hack sequence...</span>';
+            },
+
+            quotes: () => {
+                let quotesOutput = '<div class="mr-robot-profile"><div class="profile-header"><h2 class="glitch-text" data-text="Fav Quotes">Fav Quotes</h2></div>';
+
+                mrRobotQuotes.forEach(quote => {
+                    quotesOutput += `
+                    <div class="quote">
+                        ${quote.text}
+                        <span class="quote-author">— ${quote.author}</span>
+                    </div>`;
+                });
+
+                quotesOutput += '</div>';
+                return quotesOutput;
+            },
+
+            clear: () => {
+                terminalContent.innerHTML = '';
+                return '';
+            },
+
+            matrix: () => {
+                const canvas = document.getElementById('matrix-canvas');
+                if (canvas.style.display === 'none') {
+                    canvas.style.display = 'block';
+                    return '<span class="success">Matrix effect enabled.</span>';
+                } else {
+                    canvas.style.display = 'none';
+                    return '<span class="success">Matrix effect disabled.</span>';
+                }
+            },
+
+            date: () => {
+                const now = new Date();
+                return `<span class="highlight">Current date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</span>`;
+            },
+
+            echo: (args) => {
+                return `<span class="user-input">${args.join(' ')}</span>`;
+            }
+        };
+
+        // Input ProcessCommand
+        function processCommand(input) {
+            if (!input) return;
+
+            commandHistory.push(input);
+            historyIndex = commandHistory.length;
+
+            const args = input.trim().split(' ');
+            const cmd = args.shift().toLowerCase();
+
+            let output = '';
+
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+            } else if (cmd === 'exit' || cmd === 'quit') {
+                output = '<span class="error">Nice try. There is no escape.</span>';
+            } else {
+                output = `<span class="error">Command not found: ${cmd}</span>`;
+            }
+
+            const cmdElement = document.createElement('div');
+            cmdElement.innerHTML = `<span class="prompt">fsociety@bigd-code:~$</span> <span>${input}</span>`;
+            terminalContent.appendChild(cmdElement);
+
+            if (output) {
+                const outputElement = document.createElement('div');
+                outputElement.className = 'command-output';
+                outputElement.innerHTML = output;
+                terminalContent.appendChild(outputElement);
+            }
+
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+            return output;
+        }
+
+        // Event listener
+        terminalInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const input = terminalInput.value;
+                terminalInput.value = '';
+                processCommand(input);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    terminalInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    terminalInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    terminalInput.value = '';
+                }
+            }
+        });
+
+        // Bottoni Window control
+        document.getElementById('close-btn').addEventListener('click', function () {
+            alert('Nice try. The system is now tracking your IP address.');
+        });
+
+        document.getElementById('minimize-btn').addEventListener('click', function () {
+            terminalContainer.classList.toggle('minimized');
+        });
+
+        document.getElementById('maximize-btn').addEventListener('click', function () {
+            terminalContainer.classList.toggle('maximized');
+        });
+
+        // Funzionalita Drag 
+        terminalHeader.addEventListener('mousedown', initDrag, false);
+        window.addEventListener('mouseup', function () {
+            isDragging = false;
+        }, false);
+        window.addEventListener('mousemove', dragWindow, false);
+
+        function initDrag(e) {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            const rect = terminalWindow.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+
+            e.preventDefault();
+        }
+
+        function dragWindow(e) {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            terminalWindow.style.left = initialX + dx + 'px';
+            terminalWindow.style.top = initialY + dy + 'px';
+            terminalWindow.style.transform = 'none';
+        }
+
+        // Hack effect
+        function startHack() {
+            hackEffect.classList.add('active');
+            let progress = 0;
+            const hackMessages = [
+                "Bypassing security protocols",
+                "Scanning for vulnerabilities",
+                "Injecting exploit code",
+                "Establishing backdoor access",
+                "Elevating privileges",
+                "Extracting sensitive data",
+                "Covering tracks",
+                "Completing hack sequence"
+            ];
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 2;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+
+                    setTimeout(() => {
+                        hackEffect.classList.remove('active');
+
+                        // Add hack success message to terminal
+                        const successElement = document.createElement('div');
+                        successElement.className = 'command-output success';
+                        successElement.innerHTML = '✓ Hack successful! Access granted to target system.';
+                        terminalContent.appendChild(successElement);
+
+                        const dataElement = document.createElement('div');
+                        dataElement.className = 'command-output';
+                        dataElement.innerHTML = `Retrieved ${Math.floor(Math.random() * 1000) + 200}MB of classified data.`;
+                        terminalContent.appendChild(dataElement);
+
+                        terminalContent.scrollTop = terminalContent.scrollHeight;
+                    }, 1000);
+                }
+
+                hackBar.style.width = progress + '%';
+
+                if (progress < 85) {
+                    const messageIndex = Math.floor((progress / 100) * hackMessages.length);
+                    hackText.textContent = hackMessages[messageIndex];
+                } else {
+                    hackText.textContent = hackMessages[hackMessages.length - 1];
+                }
+            }, 100);
+        }
+
+        // Aggiorna tempo nella status bar
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            currentTime.textContent = timeStr;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Inizializza pioggia Matrix
+        function initMatrix() {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const fontSize = 14;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = [];
+
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+            }
+
+            // Cina
+            const chars = '田由甲申甴电甶男甸甹町画甼甽甾甿畀畁畂畃畄畅畆畇畈畉畊畋界畍畎畏畐畑';
+
+            function drawMatrix() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#0f0';
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+
+                    drops[i]++;
+                }
+            }
+
+            return setInterval(drawMatrix, 40);
+        }
+
+        // Inizializza particelle
+        function initParticles() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: {
+                        value: 50,
+                        density: {
+                            enable: true,
+                            value_area: 800
+                        }
+                    },
+                    color: {
+                        value: '#00ff00'
+                    },
+                    shape: {
+                        type: 'circle',
+                        stroke: {
+                            width: 0,
+                            color: '#000000'
+                        }
+                    },
+                    opacity: {
+                        value: 0.3,
+                        random: true,
+                        anim: {
+                            enable: true,
+                            speed: 1,
+                            opacity_min: 0.1,
+                            sync: false
+                        }
+                    },
+                    size: {
+                        value: 3,
+                        random: true,
+                        anim: {
+                            enable: true,
+                            speed: 2,
+                            size_min: 0.1,
+                            sync: false
+                        }
+                    },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#00aa00',
+                        opacity: 0.2,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 1,
+                        direction: 'none',
+                        random: true,
+                        straight: false,
+                        out_mode: 'out',
+                        bounce: false,
+                        attract: {
+                            enable: true,
+                            rotateX: 600,
+                            rotateY: 1200
+                        }
+                    }
+                },
+                interactivity: {
+                    detect_on: 'window',
+                    events: {
+                        onhover: {
+                            enable: true,
+                            mode: 'grab'
+                        },
+                        onclick: {
+                            enable: true,
+                            mode: 'push'
+                        },
+                        resize: true
+                    },
+                    modes: {
+                        grab: {
+                            distance: 140,
+                            line_linked: {
+                                opacity: 0.5
+                            }
+                        },
+                        push: {
+                            particles_nb: 4
+                        }
+                    }
+                },
+                retina_detect: true
+            });
+        }
+
+        // Inizializza terminale
+        function init() {
+            // Focus input
+            terminalInput.focus();
+            window.addEventListener('click', () => {
+                terminalInput.focus();
+            });
+
+            // Window resize handler
+            window.addEventListener('resize', () => {
+                if (window.matrixInterval) {
+                    clearInterval(window.matrixInterval);
+                }
+                window.matrixInterval = initMatrix();
+            });
+
+            // Inizializza Effetti
+            window.matrixInterval = initMatrix();
+            setTimeout(initParticles, 500);
+
+            // welcome
+            processCommand('help');
+        }
+
+        // Inizializza terminale
+        init();
+    </script>
+</body>
+
+</html>
