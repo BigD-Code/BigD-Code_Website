@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 142 100% 50%;
+    --card: 0 0% 4%;
+    --card-foreground: 142 100% 50%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 142 100% 50%;
+    --primary: 142 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 4%;
+    --secondary-foreground: 142 100% 50%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 180 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 350 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 142 100% 25%;
+    --input: 142 100% 25%;
+    --ring: 142 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-xl bg-card/80 border border-border;
+  }
+
+  .glow {
+    @apply shadow-[0_0_20px_rgba(0,255,65,0.3)] hover:shadow-[0_0_40px_rgba(0,255,65,0.5)];
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
